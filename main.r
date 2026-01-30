@@ -60,31 +60,49 @@ get_4year_cumulative_stats <- function(playerid, player_name, start_year, all_da
   if (nrow(player_stats) == 0) {
     stop("No stats found for this player in the specified years")
   }
-  
+  if (stat_type == "batting") {
+    TB <- player_stats$`1B` + (2 * player_stats$`2B`) + (3 * player_stats$`3B`) + (4 * player_stats$HR)
+    player_stats$TB <- TB
+    BIP <- player_stats$AB - player_stats$SO - player_stats$HR + player_stats$SF
+    player_stats$BIP <- BIP
+    
+    cumulative <- player_stats %>%
+      summarize(
+        player = player_name,
+        years = paste(min(years), "-", max(years)),
+        games = sum(G, na.rm = TRUE),
+        AB = sum(AB, na.rm = TRUE),
+        H = sum(H, na.rm = TRUE),
+        HR = sum(HR, na.rm = TRUE),
+        RBI = sum(RBI, na.rm = TRUE),
+        R = sum(R, na.rm = TRUE),
+        SB = sum(SB, na.rm = TRUE),
+        BB = sum(BB, na.rm = TRUE),
+        SO = sum(SO, na.rm = TRUE),
+        AVG = round(sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE), 3),
+        OBP = round(sum(H + BB, na.rm = TRUE) / sum(AB + BB, na.rm = TRUE), 3),
+        SLG = round(sum(TB, na.rm = TRUE) / sum(AB, na.rm = TRUE), 3),
+        WAR = round(sum(WAR, na.rm = TRUE), 1),
+        # wOBA calculated from summed totals: (0.69*uBB + 0.72*HBP + 0.89*1B + 1.27*2B + 1.62*3B + 2.10*HR) / (AB + BB - IBB + SF + HBP)
+        WOBA = round(
+          (0.69 * sum(BB - IBB, na.rm = TRUE) + 
+           0.72 * sum(HBP, na.rm = TRUE) + 
+           0.89 * sum(`1B`, na.rm = TRUE) + 
+           1.27 * sum(`2B`, na.rm = TRUE) + 
+           1.62 * sum(`3B`, na.rm = TRUE) + 
+           2.10 * sum(HR, na.rm = TRUE)) / 
+          sum(AB + BB - IBB + SF + HBP, na.rm = TRUE), 3),
+        BARREL_PCT = if (start_year >= 2016) round((sum(Barrels, na.rm = TRUE) / sum(BIP, na.rm = TRUE)), 3) else NA,
+        WPA = if (start_year >= 1980) round(sum(WPA, na.rm = TRUE), 2) else NA,
+        CLUTCH = if (start_year >= 1980) round(sum(Clutch, na.rm = TRUE), 2) else NA,
+        BB_K = round(sum(BB, na.rm = TRUE) / sum(SO, na.rm = TRUE), 3),
+        BSR = round(sum(BaseRunning, na.rm = TRUE), 1)
+      )
+  }
   # Calculate cumulative stats
-  TB <- player_stats$H + (2 * player_stats$`2B`) + (3 * player_stats$`3B`) + (4 * player_stats$HR)
-  player_stats$TB <- TB
   
-  cumulative <- player_stats %>%
-    summarize(
-      player = player_name,
-      years = paste(min(years), "-", max(years)),
-      games = sum(G, na.rm = TRUE),
-      AB = sum(AB, na.rm = TRUE),
-      H = sum(H, na.rm = TRUE),
-      HR = sum(HR, na.rm = TRUE),
-      RBI = sum(RBI, na.rm = TRUE),
-      R = sum(R, na.rm = TRUE),
-      SB = sum(SB, na.rm = TRUE),
-      BB = sum(BB, na.rm = TRUE),
-      SO = sum(SO, na.rm = TRUE),
-      AVG = round(sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE), 3),
-      OBP = round(sum(H + BB, na.rm = TRUE) / sum(AB + BB, na.rm = TRUE), 3),
-      SLG = round(sum(TB, na.rm = TRUE) / sum(AB, na.rm = TRUE), 3),
-      WAR = round(sum(WAR, na.rm = TRUE), 1)
-    )
   
-  return(cumulative)
+
 }
 
 # Function to create a database of all players and their first/last season
@@ -111,7 +129,7 @@ get_all_players_seasons <- function(start_year = 1980, end_year = 2025) {
     })
     
     # Small delay to avoid rate limiting
-    Sys.sleep(0.5)
+    Sys.sleep(0.2)
   }
   
   if (nrow(all_seasons_data) == 0) {
@@ -218,23 +236,28 @@ conn <- init_database("baseball_data.db")
 # message(paste("Loaded", nrow(player_database), "players and", nrow(raw_stats), "season records"))
 
 # # Generate ALL 4-year spans for ALL players
-# all_spans <- get_all_4year_spans(player_database, raw_stats, conn)
+all_spans <- get_all_4year_spans(player_database, raw_stats, conn)
 
 # # Show results
-# message("Results:")
-# print(head(all_spans, 20))
+ message("Results:")
+ print(head(all_spans, 20))
 
 # # Query from database to verify it saved
-# message("Verifying database:")
-# db_check <- dbGetQuery(conn, "SELECT COUNT(*) as total FROM four_year_spans")
-# print(paste("Total records in database:", db_check$total))
+ message("Verifying database:")
+ db_check <- dbGetQuery(conn, "SELECT COUNT(*) as total FROM four_year_spans")
+ print(paste("Total records in database:", db_check$total))
 # ###
 
 
-# sorted_by(all_spans, "AVG")
+ sorted_by(all_spans, "WOBA")
 
 # Close connection
 dbDisconnect(conn)
 
+"WOBA" %in% names(all_spans)
 
 
+head(all_spans)
+
+exists("raw_stats")
+exists("player_database")
