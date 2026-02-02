@@ -1,0 +1,27 @@
+# R files
+.Rhistory
+.Rdata
+.RData
+.Ruserdata
+.Rproj.user/
+*.Rproj
+
+# Database (large file, regenerate locally)
+*.db
+baseball_data.db
+
+# Generated output (can be regenerated)
+pictures_and_plots/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Temp files
+*~
+*.tmp
+*.bak
