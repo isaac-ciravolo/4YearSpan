@@ -43,14 +43,14 @@ plot_player_span(1, "WAR")
 
 ### Key Functions
 
-| Function                       | Description                                  |
-| ------------------------------ | -------------------------------------------- |
-| `leaderboard(stat, n)`         | Top n 4-year spans ranked by stat            |
-| `top_10_unique(stat, n)`       | Top n players (each player's best span only) |
-| `best_span(player_name)`       | Find a player's best 4-year span by WAR      |
-| `check_player(pattern)`        | Search for players matching a pattern        |
-| `plot_player_span(rank, stat)` | Percentile chart for player at given rank    |
-| `plot_top_10(stat)`            | Bar chart of top 10 spans                    |
+| Function                                    | Description                                  |
+| ------------------------------------------- | -------------------------------------------- |
+| `leaderboard(stat, n)`                      | Top n 4-year spans ranked by stat            |
+| `top_10_unique(stat, n)`                    | Top n players (each player's best span only) |
+| `best_span(player_name)`                    | Find a player's best 4-year span by WAR      |
+| `check_player(pattern)`                     | Search for players matching a pattern        |
+| `plot_player_span(player_name, span, stat)` | Percentile chart for player at given rank    |
+| `plot_top_10(stat)`                         | Bar chart of top 10 spans                    |
 
 ### Regenerating the Database
 
